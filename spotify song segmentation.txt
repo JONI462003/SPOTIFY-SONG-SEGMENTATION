@@ -1,0 +1,84 @@
+import pandas as pd
+df=pd.read_csv("spotify dataset.csv")
+df.head(3)
+df=df.dropna()
+
+DRAWING PLOTS
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.hist(df['duration_ms'], bins=30)
+plt.xlabel('Song Duration')
+plt.ylabel('Count')
+plt.title('Distribution of Song Durations')
+plt.show()
+
+sns.scatterplot(data=df, x='danceability', y='energy')
+plt.xlabel('Danceability')
+plt.ylabel('Energy')
+plt.title('Danceability vs. Energy')
+plt.show()
+
+CORRELATION MATRIX
+
+
+correlation_matrix = df.corr()
+
+# Plot the correlation matrix using a heatmap
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Matrix')
+plt.show()
+
+PLOTTING CLUSTERS
+
+
+# Import the necessary libraries for clustering
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Prepare the data for clustering
+X = df[['loudness', 'speechiness', 'acousticness']]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Perform clustering using K-means algorithm
+kmeans = KMeans(n_clusters=5)
+kmeans.fit(X_scaled)
+
+# Add cluster labels to the dataset
+df['cluster'] = kmeans.labels_
+
+# Plot clusters based on playlist genres
+sns.scatterplot(data=df, x='playlist_genre', y='loudness', hue='cluster')
+plt.xlabel('Playlist Genre')
+plt.ylabel('loudness')
+plt.title('Clusters based on Playlist Genres')
+plt.show()
+
+
+
+BUILDING FINAL MODEL
+
+# Import the necessary libraries
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Prepare the data for content-based recommendation
+corpus = df['playlist_genre']
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(corpus)
+
+# Calculate the similarity matrix
+similarity_matrix = cosine_similarity(X)
+
+# Function to recommend similar playlists based on a given playlist
+def recommend_playlists(playlist_index, num_recommendations):
+    playlist_similarity = similarity_matrix[playlist_index]
+    similar_playlists_indices = playlist_similarity.argsort()[::-1][1:num_recommendations+1]
+    similar_playlists = df.loc[similar_playlists_indices]['playlist_name']
+    return similar_playlists
+
+# Example usage: Recommend 5 similar playlists to the playlist at index 0
+recommendations = recommend_playlists(0, 5)
+print(recommendations)
+
